@@ -119,6 +119,7 @@ local function insert_elements(buf, node, elements)
   end
 
   winbar_nodes[#winbar_nodes + 1] = {
+    name = node.name,
     start = node.range.start,
   }
 end
@@ -286,11 +287,28 @@ local function toggle()
 end
 
 local function go_to_parent()
-  if #winbar_nodes < 2 then
+  if #winbar_nodes < 1 then
     return
   end
-  local parent_node = winbar_nodes[#winbar_nodes - 1]
-  vim.cmd(('normal! %dG%d|'):format(parent_node.start.line + 1, parent_node.start.character))
+
+  -- Get current cursor line (1-indexed)
+  local current_line = vim.fn.line('.')
+
+  -- Find the nearest parent node (node with line above current position)
+  local parent_node = nil
+  for i = #winbar_nodes, 1, -1 do
+    if winbar_nodes[i].start.line + 1 < current_line then
+      parent_node = winbar_nodes[i]
+      break
+    end
+  end
+
+  -- If no parent found, use the last node
+  if not parent_node then
+    parent_node = winbar_nodes[#winbar_nodes]
+  end
+
+  vim.cmd(('normal! %dG%d|'):format(parent_node.start.line + 1, parent_node.start.character + 1))
 end
 
 return {
